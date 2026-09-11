@@ -32,19 +32,42 @@ const FadeIn = ({ children, delay = 0, className = "" }: { children: React.React
   </motion.div>
 );
 
+// --- ANIMATIONS "ROULETTE" (Plus douces, délai raccourci) ---
+// La roue fait 2 tours (720°), dépasse un poil (723°), revient à sa place (720°) et fait une courte pause.
+const rouletteVariants = {
+  spin: {
+    rotate: [0, 720, 723, 720, 720], 
+    transition: {
+      duration: 6, // Cycle total plus court (6 secondes)
+      times: [0, 0.5, 0.6, 0.75, 1], // 0-3s: Tourne | 3-3.6s: Dépasse | 3.6-4.5s: Reviens | 4.5-6s: Pause (1.5s)
+      ease: ["easeInOut", "easeOut", "easeInOut", "linear"],
+      repeat: Infinity
+    }
+  }
+};
+
+// Mouvement inverse pour que les icônes restent à l'endroit (avec X et Y pour un alignement parfait sur la ligne)
+const counterSpinVariants = {
+  spin: {
+    rotate: [0, -720, -723, -720, -720],
+    x: "-50%",
+    y: "-50%",
+    transition: {
+      duration: 6,
+      times: [0, 0.5, 0.6, 0.75, 1],
+      ease: ["easeInOut", "easeOut", "easeInOut", "linear"],
+      repeat: Infinity
+    }
+  }
+};
+
 export default function App() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
-  
-  // État pour l'intro "MC"
   const [showIntro, setShowIntro] = useState(true);
 
-  // Gérer l'intro et le blocage du scroll
   useEffect(() => {
-    // Désactive l'intro après 2 secondes
-    const timer = setTimeout(() => {
-      setShowIntro(false);
-    }, 2000);
+    const timer = setTimeout(() => setShowIntro(false), 2000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -62,11 +85,11 @@ export default function App() {
   });
 
   const background = useTransform(scrollYProgress, [0, 1], ["#05070D", "#020306"]);
+  const meshOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
+  const meshScale = useTransform(scrollYProgress, [0, 0.15], [1, 1.5]);
   const hueRotate = useTransform(scrollYProgress, [0, 1], [0, 120]);
   const filterTemplate = useMotionTemplate`hue-rotate(${hueRotate}deg)`;
   
-  // Effets de profondeur (Parallax)
-  const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.3]);
   const gridY = useTransform(scrollYProgress, [0, 1], ["0%", "25%"]);
 
   return (
@@ -95,39 +118,48 @@ export default function App() {
 
       <motion.div ref={containerRef} style={{ background }} className="min-h-screen text-text_main font-sans selection:bg-primary/30 selection:text-primary relative overflow-hidden transition-colors duration-700 ease-in-out">
         
-        {/* 1. MESH GRADIENT AVEC EFFET DE PROFONDEUR (SCALE) */}
+        {/* 1. MESH GRADIENT ANIMÉ "WOW EFFECT" (Disparaît et s'agrandit au scroll) */}
         <motion.div 
           className="fixed inset-0 z-0 pointer-events-none overflow-hidden"
-          style={{ filter: filterTemplate, scale: bgScale }}
+          style={{ filter: filterTemplate, scale: meshScale, opacity: meshOpacity }}
         >
           <motion.div 
-            animate={{ x: [0, 150, -50, 0], y: [0, 100, -100, 0] }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="absolute -top-[20%] -left-[10%] w-[60vw] h-[60vw] rounded-full opacity-60"
-            style={{ background: 'radial-gradient(circle, rgba(14,165,233,0.12) 0%, rgba(14,165,233,0) 60%)' }}
+            animate={{ x: [0, 100, -50, 0], y: [0, 50, -50, 0] }}
+            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+            className="absolute -top-[10%] left-[10%] w-[40vw] h-[40vw] rounded-full opacity-70"
+            style={{ background: 'radial-gradient(circle, rgba(14,165,233,0.2) 0%, rgba(14,165,233,0) 60%)' }}
           />
           <motion.div 
-            animate={{ x: [0, -100, 100, 0], y: [0, -150, 50, 0] }}
-            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-            className="absolute top-[10%] -right-[10%] w-[70vw] h-[70vw] rounded-full opacity-50"
-            style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, rgba(99,102,241,0) 60%)' }}
+            animate={{ x: [0, -150, 50, 0], y: [0, -100, 100, 0] }}
+            transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+            className="absolute top-[20%] right-[10%] w-[50vw] h-[50vw] rounded-full opacity-60"
+            style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.2) 0%, rgba(99,102,241,0) 60%)' }}
           />
           <motion.div 
-            animate={{ x: [0, 50, -150, 0], y: [0, -50, 150, 0] }}
-            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-            className="absolute bottom-[-10%] left-[20%] w-[60vw] h-[60vw] rounded-full opacity-40"
-            style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.08) 0%, rgba(16,185,129,0) 60%)' }}
+            animate={{ x: [0, 80, -100, 0], y: [0, -100, 80, 0] }}
+            transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+            className="absolute bottom-[0%] left-[30%] w-[50vw] h-[50vw] rounded-full opacity-50"
+            style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.15) 0%, rgba(16,185,129,0) 60%)' }}
+          />
+          <motion.div 
+            animate={{ x: [0, -50, 100, 0], y: [0, 100, -50, 0] }}
+            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+            className="absolute top-[40%] left-[40%] w-[30vw] h-[30vw] rounded-full opacity-40"
+            style={{ background: 'radial-gradient(circle, rgba(236,72,153,0.1) 0%, rgba(236,72,153,0) 60%)' }}
           />
         </motion.div>
 
-        {/* 2. TEXTURE GRAIN & GRILLE (AVEC PARALLAX Y) */}
+        {/* 2. TEXTURE GRAIN & GRILLE ANIMÉE (Scrolling infini) */}
         <div 
-          className="fixed inset-0 z-0 pointer-events-none opacity-[0.03] mix-blend-overlay"
+          className="fixed inset-0 z-0 pointer-events-none opacity-[0.04] mix-blend-overlay"
           style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.85%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}
         />
+        {/* Animation du Background Position pour un effet flux de données */}
         <motion.div 
+          animate={{ backgroundPosition: ["0px 0px", "40px 40px"] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
           style={{ y: gridY }}
-          className="fixed inset-[-50%] z-0 pointer-events-none bg-grid opacity-[0.15]"
+          className="fixed inset-[-50%] z-0 pointer-events-none bg-grid opacity-[0.10]" 
         />
         
         {/* NAVBAR FLOTTANTE */}
@@ -266,7 +298,6 @@ export default function App() {
           {/* 01 — HERO */}
           <section className="min-h-[85vh] flex flex-col md:flex-row items-center justify-between gap-12 pt-12">
             <div className="flex-1">
-              {/* Correction du bug visuel de surlignage : suppression du shadow sur le texte */}
               <FadeIn delay={2.3}>
                 <div className="inline-flex items-center gap-3 mb-6 px-3 py-1.5 border border-primary/20 bg-primary/5 rounded-full backdrop-blur-sm">
                   <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
@@ -295,7 +326,7 @@ export default function App() {
                   Découvrir mon travail
                 </a>
                 <a href={portfolioData.socials.cv} target="_blank" rel="noreferrer" className="px-6 py-3 border border-primary/50 text-primary hover:bg-primary/10 rounded flex items-center gap-2 transition-colors font-medium bg-surface/30 backdrop-blur-sm">
-                  <FileDown size={18} /> Télécharger mon CV
+                  <FileDown size={18} /> Télécharger CV
                 </a>
                 <a href={portfolioData.socials.github} target="_blank" rel="noreferrer" className="px-6 py-3 border border-border_subtle hover:border-text_muted rounded text-white flex items-center gap-2 transition-colors bg-surface/50 backdrop-blur-sm">
                   <FaGithub size={18} /> GitHub
@@ -304,12 +335,54 @@ export default function App() {
             </div>
             
             <FadeIn delay={3.3} className="flex-1 hidden lg:flex justify-end relative">
-               <div className="w-[400px] h-[400px] relative border border-white/5 rounded-full flex items-center justify-center backdrop-blur-sm shadow-2xl">
-                 <motion.div animate={{ rotate: 360 }} transition={{ duration: 50, repeat: Infinity, ease: "linear" }} className="absolute inset-0 border border-primary/20 rounded-full border-dashed"></motion.div>
-                 <Network size={64} className="text-primary opacity-80" strokeWidth={1} />
-                 <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity }} className="absolute top-10 left-20 p-3 bg-surface/80 border border-white/10 rounded-lg shadow-lg"><Server size={20} className="text-text_muted"/></motion.div>
-                 <motion.div animate={{ y: [0, 15, 0] }} transition={{ duration: 5, repeat: Infinity }} className="absolute bottom-20 right-10 p-3 bg-surface/80 border border-white/10 rounded-lg shadow-lg"><Shield size={20} className="text-primary"/></motion.div>
-                 <motion.div animate={{ y: [0, -15, 0] }} transition={{ duration: 6, repeat: Infinity }} className="absolute top-1/2 -left-4 p-3 bg-surface/80 border border-white/10 rounded-lg shadow-lg"><Code size={20} className="text-text_muted"/></motion.div>
+               <div className="w-[400px] h-[400px] relative rounded-full flex items-center justify-center backdrop-blur-sm shadow-2xl">
+                 
+                 <Network size={64} className="text-primary opacity-80 z-10" strokeWidth={1} />
+                 <div className="w-48 h-48 bg-primary/20 rounded-full blur-3xl absolute mix-blend-screen z-0"></div>
+
+                 {/* CONTENEUR ANIMÉ FAÇON ROULETTE */}
+                 <motion.div 
+                    variants={rouletteVariants}
+                    animate="spin"
+                    className="absolute inset-0 rounded-full border border-primary/20 border-dashed"
+                 >
+                    {/* BULLE 1 : Exactement au milieu en haut (0°) */}
+                    <motion.div 
+                      className="absolute"
+                      style={{ top: '0%', left: '50%' }}
+                      variants={counterSpinVariants}
+                      animate="spin"
+                    >
+                      <div className="p-3 bg-surface/90 border border-white/10 rounded-lg shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+                        <Server size={20} className="text-text_muted"/>
+                      </div>
+                    </motion.div>
+
+                    {/* BULLE 2 : Exactement en bas à droite (120°) */}
+                    <motion.div 
+                      className="absolute"
+                      style={{ top: '75%', left: '93.3%' }}
+                      variants={counterSpinVariants}
+                      animate="spin"
+                    >
+                      <div className="p-3 bg-surface/90 border border-white/10 rounded-lg shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+                        <Shield size={20} className="text-primary"/>
+                      </div>
+                    </motion.div>
+
+                    {/* BULLE 3 : Exactement en bas à gauche (240°) */}
+                    <motion.div 
+                      className="absolute"
+                      style={{ top: '75%', left: '6.7%' }}
+                      variants={counterSpinVariants}
+                      animate="spin"
+                    >
+                      <div className="p-3 bg-surface/90 border border-white/10 rounded-lg shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+                        <Code size={20} className="text-text_muted"/>
+                      </div>
+                    </motion.div>
+                 </motion.div>
+
                </div>
             </FadeIn>
           </section>
